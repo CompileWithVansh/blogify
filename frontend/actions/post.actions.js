@@ -85,8 +85,10 @@ export async function updatePostAction(formData) {
 // ── DELETE ────────────────────────────────────────────────────────────────────
 
 export async function deletePostAction(formData) {
-  const user = await checkUser();
-  if (!user) throw new Error('Not authenticated');
+  // For delete we just need a valid session — skip checkUser to avoid Strapi user lookup
+  const { auth } = await import('@clerk/nextjs/server');
+  const { userId } = await auth();
+  if (!userId) throw new Error('Not authenticated');
 
   const id = formData.get('id');
   if (!id) throw new Error('Post ID is required');
