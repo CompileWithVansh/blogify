@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Feather, Github, Twitter } from 'lucide-react';
+import { Feather, Github } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -62,14 +62,11 @@ export default function Footer() {
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-stone-100">
           <p className="text-stone-400 text-sm">
-            © {new Date().getFullYear()} <span className="font-semibold text-indigo-600">Blogify</span>. All rights reserved.
+            © {new Date().getFullYear()} <span className="font-semibold text-indigo-600">Blogify</span>. Made with 💗 by Vansh Gupta
           </p>
           <div className="flex items-center gap-4">
-            <a href="#" className="text-stone-400 hover:text-stone-700 transition-colors" aria-label="GitHub">
+            <a href="https://github.com/CompileWithVansh" target="_blank" rel="noopener noreferrer" className="text-stone-400 hover:text-stone-700 transition-colors" aria-label="GitHub">
               <Github size={18} />
-            </a>
-            <a href="#" className="text-stone-400 hover:text-stone-700 transition-colors" aria-label="Twitter">
-              <Twitter size={18} />
             </a>
           </div>
         </div>
