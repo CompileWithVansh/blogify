@@ -16,6 +16,9 @@ export default function PostForm({ mode = 'create', post = null }) {
   const [content, setContent] = useState(post?.content || '');
   const titleRef = useRef(null);
 
+  // Strapi 5 uses documentId — use it if available, fallback to id
+  const postId = post?.documentId || post?.id || '';
+
   async function handleImageSearch() {
     const title = titleRef.current?.value?.trim();
     if (!title) { toast.error('Enter a title first'); return; }
@@ -58,8 +61,8 @@ export default function PostForm({ mode = 'create', post = null }) {
     <form onSubmit={handleSubmit} className="space-y-6" data-testid="post-form">
       {mode === 'edit' && (
         <>
-          <input type="hidden" name="id" value={post?.id} />
-          <input type="hidden" name="slug" value={post?.slug} />
+          <input type="hidden" name="id" value={postId} />
+          <input type="hidden" name="slug" value={post?.slug || ''} />
         </>
       )}
 

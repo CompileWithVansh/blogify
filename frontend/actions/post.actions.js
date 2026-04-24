@@ -55,7 +55,7 @@ export async function updatePostAction(formData) {
   const user = await checkUser();
   if (!user) throw new Error('Not authenticated');
 
-  const id = formData.get('id');
+  const id = formData.get('id');           // this is documentId in Strapi 5
   const title = formData.get('title');
   const content = formData.get('content');
   const excerpt = formData.get('excerpt');
