@@ -138,13 +138,13 @@ export default async function PostPage({ params }) {
         {userId && (
           <div className="flex items-center gap-3 mt-10 pt-8 border-t border-stone-200">
             <Link
-              href={`/blog/edit/${post.id}`}
+              href={`/blog/edit/${post.documentId || post.id}`}
               className="btn-primary text-sm"
               data-testid="edit-post-btn"
             >
               Edit Post
             </Link>
-            <DeletePostButton postId={post.id} />
+            <DeletePostButton postId={post.documentId || post.id} />
           </div>
         )}
       </article>

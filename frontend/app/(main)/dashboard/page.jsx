@@ -150,14 +150,14 @@ export default async function DashboardPage() {
                       <Eye size={15} />
                     </Link>
                     <Link
-                      href={`/blog/edit/${post.id}`}
+                      href={`/blog/edit/${post.documentId || post.id}`}
                       className="p-2 rounded-lg text-stone-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all"
                       title="Edit post"
                       data-testid={`edit-btn-${post.id}`}
                     >
                       <Edit size={15} />
                     </Link>
-                    <DeletePostButton postId={post.id} iconOnly />
+                    <DeletePostButton postId={post.documentId || post.id} iconOnly />
                   </div>
                 </div>
               ))}

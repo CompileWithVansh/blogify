@@ -7,11 +7,21 @@ const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
 
 async function getPostById(id) {
+  // Strapi 5 uses documentId for lookups
   const res = await fetch(`${STRAPI_URL}/api/posts/${id}?populate=*`, {
     headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     cache: 'no-store',
   });
-  if (!res.ok) return null;
+  if (!res.ok) {
+    // Try by documentId filter as fallback
+    const res2 = await fetch(`${STRAPI_URL}/api/posts?filters[documentId][$eq]=${id}&populate=*`, {
+      headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
+      cache: 'no-store',
+    });
+    if (!res2.ok) return null;
+    const d = await res2.json();
+    return d.data?.[0] ?? null;
+  }
   const data = await res.json();
   return data.data ?? null;
 }

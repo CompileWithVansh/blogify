@@ -77,6 +77,7 @@ export async function createPost(postData) {
 // ── UPDATE ────────────────────────────────────────────────────────────────────
 
 export async function updatePost(id, postData) {
+  // Strapi 5: use documentId in the URL
   const res = await fetch(`${STRAPI_URL}/api/posts/${id}`, {
     method: 'PUT',
     headers,
@@ -92,6 +93,7 @@ export async function updatePost(id, postData) {
 // ── DELETE ────────────────────────────────────────────────────────────────────
 
 export async function deletePost(id) {
+  // Strapi 5: use documentId in the URL
   const res = await fetch(`${STRAPI_URL}/api/posts/${id}`, {
     method: 'DELETE',
     headers,
