@@ -1,7 +1,7 @@
 'use client';
 
 import { useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { deletePostAction } from '@/actions/post.actions';
 import { Trash2, Loader2 } from 'lucide-react';
@@ -9,6 +9,7 @@ import { Trash2, Loader2 } from 'lucide-react';
 export default function DeletePostButton({ postId, iconOnly = false }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const pathname = usePathname();
 
   function handleDelete() {
     if (!confirm('Delete this post? This cannot be undone.')) return;
@@ -19,8 +20,8 @@ export default function DeletePostButton({ postId, iconOnly = false }) {
       try {
         await deletePostAction(formData);
         toast.success('Post deleted');
+        // Always go to dashboard — never stay on the deleted post's page
         router.push('/dashboard');
-        router.refresh();
       } catch (err) {
         toast.error(err.message || 'Failed to delete post');
       }
