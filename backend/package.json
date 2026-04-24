@@ -1,0 +1,31 @@
+{
+  "name": "blogify-backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "strapi build",
+    "dev": "strapi develop",
+    "develop": "strapi develop",
+    "start": "strapi start",
+    "strapi": "strapi"
+  },
+  "dependencies": {
+    "@strapi/plugin-cloud": "5.42.0",
+    "@strapi/plugin-users-permissions": "5.42.0",
+    "@strapi/provider-upload-cloudinary": "5.42.0",
+    "@strapi/strapi": "5.42.0",
+    "pg": "8.20.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-router-dom": "^6.0.0",
+    "styled-components": "^6.0.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=20.0.0 <=24.x.x",
+    "npm": ">=6.0.0"
+  },
+  "strapi": {
+    "uuid": "bf4a1c22-9e3d-4f8a-bc7e-1234567890ab"
+  }
+}
