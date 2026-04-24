@@ -2,9 +2,9 @@
 
 > A modern full-stack blog platform — read, write, and share ideas.
 
-**Live URL:** _Add your Vercel URL here_
-**Demo Video:** _Add your video link here (explain automation testing process)_
-**GitHub:** _Add your GitHub repo URL here_
+**Live URL:** https://blogify-vansh.vercel.app
+
+**GitHub:** https://github.com/CompileWithVansh/blogify
 
 ---
 

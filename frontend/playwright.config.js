@@ -8,7 +8,7 @@ module.exports = defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: [['html', { open: 'never' }], ['list']],
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'https://YOUR-APP.vercel.app',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'https://blogify-vansh.vercel.app',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
