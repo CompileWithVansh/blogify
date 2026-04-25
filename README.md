@@ -266,7 +266,10 @@ npm run test:e2e:report
 
 **Run against localhost instead of production:**
 ```bash
-cd frontend
+# Windows (PowerShell)
+$env:PLAYWRIGHT_BASE_URL="http://localhost:3000"; npm run test:e2e
+
+# Mac/Linux
 PLAYWRIGHT_BASE_URL=http://localhost:3000 npm run test:e2e
 ```
 
