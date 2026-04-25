@@ -232,38 +232,42 @@ Tests:       9 passed
 
 ### E2E Tests (Playwright)
 
-Tests the full application in a real browser.
+Playwright runs against the **live production URL** (`https://blogify-vansh.vercel.app`) by default — no local server needed.
 
-**Step 1 — Make sure the app is running:**
-```bash
-# Terminal 1
-cd backend && npm run dev
-
-# Terminal 2
-cd frontend && npm run dev
-```
-
-**Step 2 — Install browsers (first time only):**
+**Install browsers (first time only):**
 ```bash
 cd frontend
 npx playwright install --with-deps chromium
 ```
 
-**Step 3 — Run tests:**
+**Run all E2E tests (headless):**
 ```bash
 cd frontend
-
-# Run all E2E tests (headless)
 npm run test:e2e
+```
 
-# Run with visible browser (great for video demo)
-npx playwright test --headed
+**Run with visible browser (best for demo video):**
+```bash
+cd frontend
+npx playwright test --headed --project=chromium
+```
 
-# Run with interactive UI
+**Run with interactive UI mode:**
+```bash
+cd frontend
 npm run test:e2e:ui
+```
 
-# View HTML report after run
+**View HTML report after run:**
+```bash
+cd frontend
 npm run test:e2e:report
+```
+
+**Run against localhost instead of production:**
+```bash
+cd frontend
+PLAYWRIGHT_BASE_URL=http://localhost:3000 npm run test:e2e
 ```
 
 **What each test file covers:**
@@ -275,17 +279,7 @@ npm run test:e2e:report
 | `e2e/crud.spec.js` | Auth redirects, create/edit/delete (with auth state) |
 | `e2e/seo.spec.js` | Meta tags, sitemap.xml, robots.txt, h1 headings |
 
-**For the video — run with headed mode:**
-```bash
-npx playwright test --headed --project=chromium
-```
-This shows the browser running tests automatically — perfect for your demo video.
-
-**View the HTML report:**
-```bash
-npx playwright show-report
-```
-Opens a beautiful report at `http://localhost:9323` showing all passed/failed tests with screenshots.
+The HTML report opens at `http://localhost:9323` and shows all passed/failed tests with screenshots and traces.
 
 ---
 
@@ -347,13 +341,15 @@ For your submission video explaining automation testing:
 
 4. **Run Playwright headed** (2min)
    ```bash
+   cd frontend
    npx playwright test --headed --project=chromium
    ```
    Show the browser opening, navigating, clicking — fully automated
 
 5. **Show HTML report** (1min)
    ```bash
-   npx playwright show-report
+   cd frontend
+   npm run test:e2e:report
    ```
    Show the visual report with green checkmarks
 
