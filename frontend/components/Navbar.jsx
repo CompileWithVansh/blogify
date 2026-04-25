@@ -159,6 +159,23 @@ export default function Navbar() {
             >
               <PenLine size={16} /> Write a Post
             </Link>
+            <div className="flex items-center gap-3 px-3 py-2.5">
+              <UserButton
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: 'w-9 h-9 ring-2 ring-stone-200 hover:ring-indigo-300 transition-all rounded-xl',
+                  },
+                }}
+              >
+                <UserButton.MenuItems>
+                  <UserButton.Link label="Dashboard" labelIcon={<LayoutDashboard size={14} />} href="/dashboard" />
+                  <UserButton.Link label="Write a Post" labelIcon={<PenLine size={14} />} href="/blog/create" />
+                  <UserButton.Action label="manageAccount" />
+                </UserButton.MenuItems>
+              </UserButton>
+              <span className="text-sm text-stone-500">Account &amp; Sign Out</span>
+            </div>
           </SignedIn>
 
           <SignedOut>
