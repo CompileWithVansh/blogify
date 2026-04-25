@@ -18,8 +18,8 @@
       "maxLength": 200
     },
     "slug": {
-      "type": "uid",
-      "targetField": "title",
+      "type": "string",
+      "unique": true,
       "required": true
     },
     "excerpt": {

@@ -8,8 +8,12 @@ export const checkUser = async () => {
   if (!user) return null;
 
   if (!STRAPI_API_TOKEN) {
-    console.error('❌ STRAPI_API_TOKEN is missing');
+    console.error('❌ STRAPI_API_TOKEN is missing — add it to your Vercel environment variables');
     return null;
+  }
+
+  if (!STRAPI_URL || STRAPI_URL === 'http://localhost:1337') {
+    console.warn('⚠️ NEXT_PUBLIC_STRAPI_URL is localhost — this will fail in production. Set it to your deployed Strapi URL.');
   }
 
   try {
@@ -55,7 +59,9 @@ export const checkUser = async () => {
 
     if (!newUserRes.ok) {
       const errText = await newUserRes.text();
-      console.error('❌ Error creating user:', errText);
+      console.error(`❌ Error creating Strapi user (status ${newUserRes.status}):`, errText);
+      console.error('❌ Strapi URL used:', STRAPI_URL);
+      console.error('❌ Clerk user ID:', user.id, '| Email:', user.emailAddresses[0]?.emailAddress);
       // If user creation fails (e.g. already exists with different filter), try fetching by email
       const emailRes = await fetch(
         `${STRAPI_URL}/api/users?filters[email][$eq]=${user.emailAddresses[0]?.emailAddress}`,

@@ -18,8 +18,13 @@ function generateSlug(title) {
 // ── CREATE ────────────────────────────────────────────────────────────────────
 
 export async function createPostAction(formData) {
+  // Verify Clerk session first — this is the real auth check
+  const { auth } = await import('@clerk/nextjs/server');
+  const { userId } = await auth();
+  if (!userId) throw new Error('Not authenticated');
+
   const user = await checkUser();
-  if (!user) throw new Error('Not authenticated');
+  if (!user) throw new Error('Failed to sync user with backend. Check STRAPI_API_TOKEN and NEXT_PUBLIC_STRAPI_URL in your environment variables.');
 
   const title = formData.get('title');
   const content = formData.get('content');
@@ -52,8 +57,12 @@ export async function createPostAction(formData) {
 // ── UPDATE ────────────────────────────────────────────────────────────────────
 
 export async function updatePostAction(formData) {
+  const { auth } = await import('@clerk/nextjs/server');
+  const { userId } = await auth();
+  if (!userId) throw new Error('Not authenticated');
+
   const user = await checkUser();
-  if (!user) throw new Error('Not authenticated');
+  if (!user) throw new Error('Failed to sync user with backend. Check STRAPI_API_TOKEN and NEXT_PUBLIC_STRAPI_URL in your environment variables.');
 
   const id = formData.get('id');           // this is documentId in Strapi 5
   const title = formData.get('title');
