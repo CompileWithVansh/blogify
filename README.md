@@ -6,22 +6,7 @@
 
 **GitHub:** https://github.com/CompileWithVansh/blogify
 
----
 
-## Task Completion Checklist ✅
-
-| Requirement | Status |
-|---|---|
-| CRUD Operations (Create, Read, Update, Delete posts) | ✅ Done |
-| Responsive UI (mobile + desktop) | ✅ Done |
-| SEO-friendly structure (metadata, sitemap, robots.txt, OG tags) | ✅ Done |
-| Playwright E2E automation tests | ✅ Done |
-| Jest unit + integration tests | ✅ Done |
-| Deployment on cloud platform (Vercel + Render) | ✅ Done |
-| Tests pass before deployment (GitHub Actions CI) | ✅ Done |
-| Clean, modern UI | ✅ Done |
-
----
 
 ## Tech Stack
 
