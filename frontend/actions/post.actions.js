@@ -75,6 +75,21 @@ export async function updatePostAction(formData) {
 
   if (!id || !title || !content) throw new Error('ID, title and content are required');
 
+  // Verify ownership before updating
+  const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+  const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
+  const postRes = await fetch(`${STRAPI_URL}/api/posts/${id}?populate=author`, {
+    headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
+    cache: 'no-store',
+  });
+  if (postRes.ok) {
+    const postData = await postRes.json();
+    const authorId = postData?.data?.author?.id ?? postData?.data?.author;
+    if (authorId && String(authorId) !== String(user.id)) {
+      throw new Error('You can only edit your own posts');
+    }
+  }
+
   const result = await updatePost(id, {
     title,
     content,
@@ -94,13 +109,33 @@ export async function updatePostAction(formData) {
 // ── DELETE ────────────────────────────────────────────────────────────────────
 
 export async function deletePostAction(formData) {
-  // For delete we just need a valid session — skip checkUser to avoid Strapi user lookup
   const { auth } = await import('@clerk/nextjs/server');
   const { userId } = await auth();
   if (!userId) throw new Error('Not authenticated');
 
   const id = formData.get('id');
   if (!id) throw new Error('Post ID is required');
+
+  // Verify the post belongs to the current user before deleting
+  const user = await checkUser();
+  if (!user) throw new Error('Could not verify user identity');
+
+  const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+  const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
+
+  const postRes = await fetch(`${STRAPI_URL}/api/posts/${id}?populate=author`, {
+    headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
+    cache: 'no-store',
+  });
+
+  if (!postRes.ok) throw new Error('Post not found');
+
+  const postData = await postRes.json();
+  const authorId = postData?.data?.author?.id ?? postData?.data?.author;
+
+  if (String(authorId) !== String(user.id)) {
+    throw new Error('You can only delete your own posts');
+  }
 
   await deletePost(id);
 

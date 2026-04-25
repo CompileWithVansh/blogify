@@ -8,45 +8,61 @@ export const checkUser = async () => {
   if (!user) return null;
 
   if (!STRAPI_API_TOKEN) {
-    console.error('❌ STRAPI_API_TOKEN is missing — add it to your Vercel environment variables');
+    console.error('❌ STRAPI_API_TOKEN is missing');
     return null;
   }
 
-  if (!STRAPI_URL || STRAPI_URL === 'http://localhost:1337') {
-    console.warn('⚠️ NEXT_PUBLIC_STRAPI_URL is localhost — this will fail in production. Set it to your deployed Strapi URL.');
-  }
+  const authHeaders = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${STRAPI_API_TOKEN}`,
+  };
 
   try {
-    // Check if user already exists in Strapi by clerkId
-    const existingRes = await fetch(
+    // 1. Try find by clerkId
+    const byClerkId = await fetch(
       `${STRAPI_URL}/api/users?filters[clerkId][$eq]=${user.id}`,
-      {
-        headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
-        cache: 'no-store',
-      }
+      { headers: authHeaders, cache: 'no-store' }
     );
+    if (byClerkId.ok) {
+      const found = await byClerkId.json();
+      if (Array.isArray(found) && found.length > 0) return found[0];
+    }
 
-    if (existingRes.ok) {
-      const existingUsers = await existingRes.json();
-      if (Array.isArray(existingUsers) && existingUsers.length > 0) {
-        return existingUsers[0];
+    // 2. Try find by email (user may exist without clerkId)
+    const email = user.emailAddresses[0]?.emailAddress;
+    if (email) {
+      const byEmail = await fetch(
+        `${STRAPI_URL}/api/users?filters[email][$eq]=${encodeURIComponent(email)}`,
+        { headers: authHeaders, cache: 'no-store' }
+      );
+      if (byEmail.ok) {
+        const found = await byEmail.json();
+        if (Array.isArray(found) && found.length > 0) {
+          const existing = found[0];
+          // Patch clerkId onto the existing user so future lookups are fast
+          await fetch(`${STRAPI_URL}/api/users/${existing.id}`, {
+            method: 'PUT',
+            headers: authHeaders,
+            body: JSON.stringify({ clerkId: user.id }),
+          });
+          return existing;
+        }
       }
     }
 
-    // Create new user — skip role lookup, Strapi assigns default role
-    const username = (user.username ||
-      user.emailAddresses[0]?.emailAddress?.split('@')[0] ||
-      `user_${Date.now()}`).replace(/[^a-zA-Z0-9_]/g, '_');
+    // 3. Create new user
+    const username = (
+      user.username ||
+      email?.split('@')[0] ||
+      `user_${Date.now()}`
+    ).replace(/[^a-zA-Z0-9_]/g, '_');
 
-    const newUserRes = await fetch(`${STRAPI_URL}/api/users`, {
+    const createRes = await fetch(`${STRAPI_URL}/api/users`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${STRAPI_API_TOKEN}`,
-      },
+      headers: authHeaders,
       body: JSON.stringify({
         username,
-        email: user.emailAddresses[0]?.emailAddress,
+        email,
         password: `Clerk_${user.id}_${Date.now()}!`,
         confirmed: true,
         blocked: false,
@@ -57,24 +73,15 @@ export const checkUser = async () => {
       }),
     });
 
-    if (!newUserRes.ok) {
-      const errText = await newUserRes.text();
-      console.error(`❌ Error creating Strapi user (status ${newUserRes.status}):`, errText);
-      console.error('❌ Strapi URL used:', STRAPI_URL);
-      console.error('❌ Clerk user ID:', user.id, '| Email:', user.emailAddresses[0]?.emailAddress);
-      // If user creation fails (e.g. already exists with different filter), try fetching by email
-      const emailRes = await fetch(
-        `${STRAPI_URL}/api/users?filters[email][$eq]=${user.emailAddresses[0]?.emailAddress}`,
-        { headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` }, cache: 'no-store' }
-      );
-      if (emailRes.ok) {
-        const emailUsers = await emailRes.json();
-        if (Array.isArray(emailUsers) && emailUsers.length > 0) return emailUsers[0];
-      }
+    if (!createRes.ok) {
+      const errText = await createRes.text();
+      console.error(`❌ Strapi user creation failed (${createRes.status}):`, errText);
+      console.error('❌ Strapi URL:', STRAPI_URL);
+      console.error('❌ Clerk ID:', user.id, '| Email:', email);
       return null;
     }
 
-    return newUserRes.json();
+    return createRes.json();
   } catch (error) {
     console.error('❌ checkUser error:', error.message);
     return null;
