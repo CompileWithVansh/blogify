@@ -8,6 +8,18 @@ const authHeaders = () => ({
   Authorization: `Bearer ${STRAPI_API_TOKEN}`,
 });
 
+async function getAuthenticatedRoleId() {
+  const res = await fetch(`${STRAPI_URL}/api/users-permissions/roles`, {
+    headers: authHeaders(),
+    cache: 'no-store',
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const roles = data?.roles ?? [];
+  const authenticated = roles.find((r) => r.type === 'authenticated');
+  return authenticated?.id ?? null;
+}
+
 async function findByClerkId(clerkId) {
   const res = await fetch(
     `${STRAPI_URL}/api/users?filters[clerkId][$eq]=${clerkId}`,
@@ -40,11 +52,11 @@ export const checkUser = async () => {
   const email = user.emailAddresses[0]?.emailAddress;
 
   try {
-    // 1. Find by clerkId (fastest path for returning users)
+    // 1. Find by clerkId (fast path for returning users)
     const byClerkId = await findByClerkId(user.id);
     if (byClerkId) return byClerkId;
 
-    // 2. Find by email (handles users created before clerkId was added)
+    // 2. Find by email (user may exist without clerkId)
     if (email) {
       const byEmail = await findByEmail(email);
       if (byEmail) {
@@ -58,14 +70,19 @@ export const checkUser = async () => {
       }
     }
 
-    // 3. Create new user — use clerkId suffix to guarantee unique username
-    const baseUsername = (
+    // 3. Get the "Authenticated" role ID — required by Strapi
+    const roleId = await getAuthenticatedRoleId();
+    if (!roleId) {
+      console.error('❌ Could not fetch Authenticated role from Strapi');
+      return null;
+    }
+
+    // 4. Create new user with role
+    const username = `${(
       user.username ||
       email?.split('@')[0] ||
       'user'
-    ).replace(/[^a-zA-Z0-9_]/g, '_');
-
-    const username = `${baseUsername}_${user.id.slice(-6)}`;
+    ).replace(/[^a-zA-Z0-9_]/g, '_')}_${user.id.slice(-6)}`;
 
     const createRes = await fetch(`${STRAPI_URL}/api/users`, {
       method: 'POST',
@@ -76,6 +93,7 @@ export const checkUser = async () => {
         password: `Clerk_${user.id}_${Date.now()}!`,
         confirmed: true,
         blocked: false,
+        role: roleId,
         clerkId: user.id,
         firstName: user.firstName || '',
         lastName: user.lastName || '',
@@ -86,11 +104,9 @@ export const checkUser = async () => {
     if (!createRes.ok) {
       const errText = await createRes.text();
       console.error(`❌ Strapi create failed (${createRes.status}): ${errText}`);
-
-      // Race condition: another request may have just created the user — try fetching again
+      // Race condition retry
       const retry = await findByClerkId(user.id) || (email ? await findByEmail(email) : null);
       if (retry) return retry;
-
       return null;
     }
 
