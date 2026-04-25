@@ -25,12 +25,21 @@ export async function generateMetadata({ params }) {
 export default async function PostPage({ params }) {
   const post = await getPostBySlug(params.slug);
 
-  // Debug: if still 404, the slug might not match — try fetching by ID fallback
   if (!post) notFound();
 
   const { userId } = await auth();
   const imageUrl = getImageUrl(post);
   const tags = Array.isArray(post.tags) ? post.tags : [];
+
+  // Check if the current user is the author
+  let isAuthor = false;
+  if (userId) {
+    const { checkUser } = await import('@/lib/checkUser');
+    const strapiUser = await checkUser();
+    if (strapiUser && post.author) {
+      isAuthor = String(strapiUser.id) === String(post.author.id);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -134,8 +143,8 @@ export default async function PostPage({ params }) {
           </div>
         )}
 
-        {/* Author actions (only for logged-in users) */}
-        {userId && (
+        {/* Author actions — only visible to the post's author */}
+        {isAuthor && (
           <div className="flex items-center gap-3 mt-10 pt-8 border-t border-stone-200">
             <Link
               href={`/blog/edit/${post.documentId || post.id}`}
