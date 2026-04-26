@@ -17,11 +17,11 @@
 | Styling | Tailwind CSS |
 | Auth | Clerk |
 | Image Storage | Cloudinary |
-| Database | PostgreSQL (Render) |
+| Database | PostgreSQL (managed by Strapiapp) |
 | E2E Testing | Playwright |
 | Unit Testing | Jest + React Testing Library |
 | CI/CD | GitHub Actions |
-| Deployment | Vercel (frontend) + Render (backend) |
+| Deployment | Vercel (frontend) + Strapiapp (backend) |
 
 ---
 
@@ -273,17 +273,15 @@ The HTML report opens at `http://localhost:9323` and shows all passed/failed tes
 
 ## Deployment
 
-### Backend → Render
+### Backend → Strapiapp
 
 1. Push code to GitHub
-2. [render.com](https://render.com) → **New → Web Service**
-3. Connect repo → Root Directory: `backend`
-4. Build: `npm install && npm run build`
-5. Start: `npm start`
-6. **New → PostgreSQL** → copy External Database URL
-7. Add env vars (from `backend/.env.example`)
-8. Set `DATABASE_URL` to your Postgres URL, `DATABASE_SSL=true`
-9. Deploy → copy your backend URL (e.g. `https://blogify-backend.onrender.com`)
+2. Go to [strapiapp.com](https://strapiapp.com) → **New Project**
+3. Connect your GitHub repo → select the `backend` folder
+4. Strapiapp manages the database automatically (no separate PostgreSQL needed)
+5. Add env vars from `backend/.env.example` (Strapi secrets + Cloudinary)
+6. Deploy → copy your backend URL (e.g. `https://your-app.strapiapp.com`)
+7. Go to Strapi Admin → **Settings → API Tokens** → create a Full Access token → copy it
 
 ### Frontend → Vercel
 
