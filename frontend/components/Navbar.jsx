@@ -6,7 +6,7 @@ import {
   SignedIn, SignedOut, SignInButton, SignUpButton, UserButton,
 } from '@clerk/nextjs';
 import {
-  PenLine, BookOpen, LayoutDashboard, Menu, X, Feather,
+  PenLine, BookOpen, LayoutDashboard, Menu, X, Feather, Shield,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -15,7 +15,7 @@ const NAV_LINKS = [
   { href: '/blog', label: 'Blog', icon: BookOpen },
 ];
 
-export default function Navbar() {
+export default function Navbar({ isAdmin = false }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -26,7 +26,6 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => setOpen(false), [pathname]);
 
   return (
@@ -80,6 +79,21 @@ export default function Navbar() {
               <LayoutDashboard size={15} />
               Dashboard
             </Link>
+
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className={cn(
+                  'flex items-center gap-1.5 text-sm font-medium px-3.5 py-2 rounded-xl transition-all',
+                  pathname.startsWith('/admin')
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-indigo-600 hover:text-white hover:bg-indigo-600'
+                )}
+              >
+                <Shield size={15} />
+                Admin
+              </Link>
+            )}
           </SignedIn>
         </div>
 
@@ -111,6 +125,9 @@ export default function Navbar() {
             >
               <UserButton.MenuItems>
                 <UserButton.Link label="Dashboard" labelIcon={<LayoutDashboard size={14} />} href="/dashboard" />
+                {isAdmin && (
+                  <UserButton.Link label="Admin Panel" labelIcon={<Shield size={14} />} href="/admin" />
+                )}
                 <UserButton.Link label="Write a Post" labelIcon={<PenLine size={14} />} href="/blog/create" />
                 <UserButton.Action label="manageAccount" />
               </UserButton.MenuItems>
@@ -153,6 +170,16 @@ export default function Navbar() {
             >
               <LayoutDashboard size={16} /> Dashboard
             </Link>
+
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+              >
+                <Shield size={16} /> Admin Panel
+              </Link>
+            )}
+
             <Link
               href="/blog/create"
               className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors"
@@ -170,6 +197,9 @@ export default function Navbar() {
               >
                 <UserButton.MenuItems>
                   <UserButton.Link label="Dashboard" labelIcon={<LayoutDashboard size={14} />} href="/dashboard" />
+                  {isAdmin && (
+                    <UserButton.Link label="Admin Panel" labelIcon={<Shield size={14} />} href="/admin" />
+                  )}
                   <UserButton.Link label="Write a Post" labelIcon={<PenLine size={14} />} href="/blog/create" />
                   <UserButton.Action label="manageAccount" />
                 </UserButton.MenuItems>

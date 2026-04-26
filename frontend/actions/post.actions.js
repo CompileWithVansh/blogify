@@ -1,6 +1,6 @@
 'use server';
 
-import { checkUser } from '@/lib/checkUser';
+import { checkUser, isAdminUser } from '@/lib/checkUser';
 import { createPost, updatePost, deletePost, estimateReadTime } from '@/lib/strapi';
 import { revalidatePath } from 'next/cache';
 
@@ -86,7 +86,7 @@ export async function updatePostAction(formData) {
       headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
       cache: 'no-store',
     });
-    if (postRes.ok) {
+    if (postRes.ok && !isAdminUser(user)) {
       const postData = await postRes.json();
       const authorId = postData?.data?.author?.id ?? postData?.data?.author;
       if (authorId && String(authorId) !== String(user.id)) {
@@ -131,7 +131,7 @@ export async function deletePostAction(formData) {
       cache: 'no-store',
     });
 
-    if (postRes.ok) {
+    if (postRes.ok && !isAdminUser(user)) {
       const postData = await postRes.json();
       const authorId = postData?.data?.author?.id ?? postData?.data?.author;
       if (authorId && String(authorId) !== String(user.id)) {

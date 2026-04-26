@@ -47,6 +47,10 @@
       "relation": "oneToMany",
       "target": "api::post.post",
       "mappedBy": "author"
+    },
+    "isAdmin": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

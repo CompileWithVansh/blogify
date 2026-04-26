@@ -5,16 +5,21 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { createPostAction, updatePostAction, searchCoverImage } from '@/actions/post.actions';
 import { CATEGORIES } from '@/lib/utils';
-import { ImageIcon, Loader2, X, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { ImageIcon, Loader2, X, Eye, EyeOff, Sparkles, Upload } from 'lucide-react';
+
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const STRAPI_API_TOKEN = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN;
 
 export default function PostForm({ mode = 'create', post = null }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [coverImageUrl, setCoverImageUrl] = useState(post?.coverImageUrl || '');
   const [searchingImage, setSearchingImage] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [preview, setPreview] = useState(false);
   const [content, setContent] = useState(post?.content || '');
   const titleRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Strapi 5 uses documentId — use it if available, fallback to id
   const postId = post?.documentId || post?.id || '';
@@ -31,6 +36,47 @@ export default function PostForm({ mode = 'create', post = null }) {
       toast.error('Image search failed');
     } finally {
       setSearchingImage(false);
+    }
+  }
+
+  async function handleFileUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate type and size (max 5MB)
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be under 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Upload failed');
+      }
+
+      const { url } = await res.json();
+      setCoverImageUrl(url);
+      toast.success('Image uploaded!');
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error('Upload failed — try pasting a URL instead');
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }
 
@@ -131,20 +177,48 @@ export default function PostForm({ mode = 'create', post = null }) {
       {/* ── Cover image ── */}
       <div>
         <label className="label">Cover Image</label>
+
+        {/* Upload area */}
+        <div
+          className="mb-3 border-2 border-dashed border-stone-200 rounded-2xl p-5 text-center hover:border-indigo-300 hover:bg-indigo-50/30 transition-all cursor-pointer group"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+          {uploadingImage ? (
+            <div className="flex flex-col items-center gap-2 text-indigo-500">
+              <Loader2 size={24} className="animate-spin" />
+              <span className="text-sm font-medium">Uploading…</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2 text-stone-400 group-hover:text-indigo-500 transition-colors">
+              <Upload size={22} />
+              <span className="text-sm font-medium">Click to upload from your device</span>
+              <span className="text-xs text-stone-400">PNG, JPG, WEBP — max 5MB</span>
+            </div>
+          )}
+        </div>
+
+        {/* URL input + auto search */}
         <div className="flex gap-2">
           <input
             value={coverImageUrl}
             onChange={(e) => setCoverImageUrl(e.target.value)}
-            placeholder="Paste an image URL or search by title..."
+            placeholder="Or paste an image URL…"
             className="input flex-1"
             data-testid="cover-image-input"
           />
           <button
             type="button"
             onClick={handleImageSearch}
-            disabled={searchingImage}
+            disabled={searchingImage || uploadingImage}
             className="btn-secondary shrink-0 text-sm"
-            title="Search Unsplash for a cover image"
+            title="Auto-search Unsplash by title"
           >
             {searchingImage
               ? <Loader2 size={15} className="animate-spin" />

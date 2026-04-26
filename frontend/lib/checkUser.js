@@ -3,6 +3,9 @@ import { currentUser } from '@clerk/nextjs/server';
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
 
+// ── Your super-admin email ────────────────────────────────────────────────────
+const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL || 'vanshgupta7017@gmail.com';
+
 const authHeaders = () => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${STRAPI_API_TOKEN}`,
@@ -40,6 +43,20 @@ async function findByEmail(email) {
   return Array.isArray(data) && data.length > 0 ? data[0] : null;
 }
 
+async function ensureAdminFlag(userId, email, currentIsAdmin) {
+  const shouldBeAdmin = email === SUPER_ADMIN_EMAIL;
+  if (shouldBeAdmin && !currentIsAdmin) {
+    // Promote to admin
+    fetch(`${STRAPI_URL}/api/users/${userId}`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify({ isAdmin: true }),
+    }).catch(() => {});
+    return true;
+  }
+  return currentIsAdmin ?? false;
+}
+
 export const checkUser = async () => {
   const user = await currentUser();
   if (!user) return null;
@@ -54,7 +71,10 @@ export const checkUser = async () => {
   try {
     // 1. Find by clerkId (fast path for returning users)
     const byClerkId = await findByClerkId(user.id);
-    if (byClerkId) return byClerkId;
+    if (byClerkId) {
+      const isAdmin = await ensureAdminFlag(byClerkId.id, byClerkId.email, byClerkId.isAdmin);
+      return { ...byClerkId, isAdmin };
+    }
 
     // 2. Find by email (user may exist without clerkId)
     if (email) {
@@ -66,7 +86,8 @@ export const checkUser = async () => {
           headers: authHeaders(),
           body: JSON.stringify({ clerkId: user.id }),
         }).catch(() => {});
-        return byEmail;
+        const isAdmin = await ensureAdminFlag(byEmail.id, byEmail.email, byEmail.isAdmin);
+        return { ...byEmail, isAdmin };
       }
     }
 
@@ -84,6 +105,8 @@ export const checkUser = async () => {
       'user'
     ).replace(/[^a-zA-Z0-9_]/g, '_')}_${user.id.slice(-6)}`;
 
+    const isSuperAdmin = email === SUPER_ADMIN_EMAIL;
+
     const createRes = await fetch(`${STRAPI_URL}/api/users`, {
       method: 'POST',
       headers: authHeaders(),
@@ -98,21 +121,31 @@ export const checkUser = async () => {
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         imageUrl: user.imageUrl || '',
+        isAdmin: isSuperAdmin,
       }),
     });
 
     if (!createRes.ok) {
       const errText = await createRes.text();
       console.error(`❌ Strapi create failed (${createRes.status}): ${errText}`);
-      // Race condition retry
       const retry = await findByClerkId(user.id) || (email ? await findByEmail(email) : null);
       if (retry) return retry;
       return null;
     }
 
-    return createRes.json();
+    const newUser = await createRes.json();
+    return { ...newUser, isAdmin: isSuperAdmin };
   } catch (error) {
     console.error('❌ checkUser error:', error.message);
     return null;
   }
 };
+
+// Helper to check if a Strapi user is admin
+export const isAdminUser = (user) => user?.isAdmin === true;
+
+// Helper to check if a Strapi user is the super admin
+export const isSuperAdminUser = (user) => user?.email === SUPER_ADMIN_EMAIL;
+
+// Export the super admin email for use in other modules
+export { SUPER_ADMIN_EMAIL };

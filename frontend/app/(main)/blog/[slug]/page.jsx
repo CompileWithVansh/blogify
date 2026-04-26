@@ -31,13 +31,19 @@ export default async function PostPage({ params }) {
   const imageUrl = getImageUrl(post);
   const tags = Array.isArray(post.tags) ? post.tags : [];
 
-  // Check if the current user is the author
+  // Check if the current user is the author or admin
   let isAuthor = false;
+  let isAdmin = false;
+  let isSuperAdmin = false;
   if (userId) {
-    const { checkUser } = await import('@/lib/checkUser');
+    const { checkUser, isAdminUser, isSuperAdminUser } = await import('@/lib/checkUser');
     const strapiUser = await checkUser();
-    if (strapiUser && post.author) {
-      isAuthor = String(strapiUser.id) === String(post.author.id);
+    if (strapiUser) {
+      isAdmin = isAdminUser(strapiUser);
+      isSuperAdmin = isSuperAdminUser(strapiUser);
+      if (post.author) {
+        isAuthor = String(strapiUser.id) === String(post.author.id);
+      }
     }
   }
 
@@ -143,7 +149,7 @@ export default async function PostPage({ params }) {
           </div>
         )}
 
-        {/* Author actions — only visible to the post's author */}
+        {/* Author actions — visible to the post's author */}
         {isAuthor && (
           <div className="flex items-center gap-3 mt-10 pt-8 border-t border-stone-200">
             <Link
@@ -153,6 +159,26 @@ export default async function PostPage({ params }) {
             >
               Edit Post
             </Link>
+            <DeletePostButton postId={post.documentId || post.id} />
+          </div>
+        )}
+
+        {/* Admin actions — visible to admins who aren't the author */}
+        {!isAuthor && isAdmin && (
+          <div className="flex items-center gap-3 mt-10 pt-8 border-t border-red-200 bg-red-50/30 -mx-6 px-6 py-4 rounded-xl">
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-red-900 mb-0.5">Admin Actions</p>
+              <p className="text-xs text-red-600">You can moderate this post as an admin.</p>
+            </div>
+            {/* Edit only for super admin */}
+            {isSuperAdmin && (
+              <Link
+                href={`/blog/edit/${post.documentId || post.id}`}
+                className="btn-secondary text-sm"
+              >
+                Edit Post
+              </Link>
+            )}
             <DeletePostButton postId={post.documentId || post.id} />
           </div>
         )}
