@@ -3,10 +3,10 @@
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { adminToggleUserAdmin, adminToggleBlockUser } from '@/actions/admin.actions';
-import { Shield, ShieldOff, Ban, CheckCircle, Loader2 } from 'lucide-react';
+import { adminToggleUserAdmin, adminToggleBlockUser, adminDeleteUser } from '@/actions/admin.actions';
+import { Shield, ShieldOff, Ban, CheckCircle, Loader2, Trash2 } from 'lucide-react';
 
-export default function AdminUserActions({ userId, isAdmin, blocked }) {
+export default function AdminUserActions({ userId, isAdmin, blocked, isSuperAdmin = false }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -32,6 +32,26 @@ export default function AdminUserActions({ userId, isAdmin, blocked }) {
     });
   }
 
+  function handleDelete() {
+    if (!confirm('Delete this user permanently? Their posts will remain but become authorless. This cannot be undone.')) return;
+    const fd = new FormData();
+    fd.set('id', userId);
+    startTransition(async () => {
+      const res = await adminDeleteUser(fd);
+      if (res?.error) toast.error(res.error);
+      else { toast.success('User deleted'); router.refresh(); }
+    });
+  }
+
+  // Super admin row — no actions allowed
+  if (isSuperAdmin) {
+    return (
+      <div className="flex items-center justify-end">
+        <span className="text-xs text-stone-300 italic">protected</span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-end gap-1">
       <button
@@ -52,11 +72,19 @@ export default function AdminUserActions({ userId, isAdmin, blocked }) {
         className={`p-1.5 rounded-lg transition-all disabled:opacity-50 ${
           blocked
             ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'
-            : 'text-stone-400 hover:text-red-500 hover:bg-red-50'
+            : 'text-stone-400 hover:text-orange-500 hover:bg-orange-50'
         }`}
         title={blocked ? 'Unblock user' : 'Block user'}
       >
         {isPending ? <Loader2 size={13} className="animate-spin" /> : blocked ? <CheckCircle size={13} /> : <Ban size={13} />}
+      </button>
+      <button
+        onClick={handleDelete}
+        disabled={isPending}
+        className="p-1.5 rounded-lg text-stone-400 hover:text-red-500 hover:bg-red-50 transition-all disabled:opacity-50"
+        title="Delete user"
+      >
+        {isPending ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
       </button>
     </div>
   );

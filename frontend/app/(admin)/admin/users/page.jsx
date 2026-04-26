@@ -1,8 +1,9 @@
 import { adminGetAllUsers } from '@/actions/admin.actions';
 import { formatDate } from '@/lib/utils';
-import { Shield, User } from 'lucide-react';
+import { Shield, User, Crown } from 'lucide-react';
 import AdminUserActions from '@/components/admin/AdminUserActions';
 import AdminSearchInput from '@/components/admin/AdminSearchInput';
+import { SUPER_ADMIN_EMAIL } from '@/lib/checkUser';
 
 export const metadata = { title: 'Manage Users | Admin' };
 
@@ -64,9 +65,15 @@ export default async function AdminUsersPage({ searchParams }) {
                   <td className="px-4 py-3.5 text-stone-500">{u.email}</td>
                   <td className="px-4 py-3.5">
                     {u.isAdmin ? (
-                      <span className="flex items-center gap-1 text-indigo-600 text-xs font-semibold bg-indigo-50 px-2 py-0.5 rounded-full w-fit">
-                        <Shield size={11} /> Admin
-                      </span>
+                      u.email === SUPER_ADMIN_EMAIL ? (
+                        <span className="flex items-center gap-1 text-amber-600 text-xs font-semibold bg-amber-50 px-2 py-0.5 rounded-full w-fit">
+                          <Crown size={11} /> Super Admin
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-indigo-600 text-xs font-semibold bg-indigo-50 px-2 py-0.5 rounded-full w-fit">
+                          <Shield size={11} /> Admin
+                        </span>
+                      )
                     ) : (
                       <span className="text-xs text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">User</span>
                     )}
@@ -86,6 +93,7 @@ export default async function AdminUsersPage({ searchParams }) {
                       userId={u.id}
                       isAdmin={u.isAdmin ?? false}
                       blocked={u.blocked ?? false}
+                      isSuperAdmin={u.email === SUPER_ADMIN_EMAIL}
                     />
                   </td>
                 </tr>

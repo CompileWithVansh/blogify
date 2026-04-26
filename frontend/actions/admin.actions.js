@@ -125,6 +125,38 @@ export async function adminToggleBlockUser(formData) {
   return { success: true };
 }
 
+export async function adminDeleteUser(formData) {
+  const currentUser = await requireAdmin();
+  const id = formData.get('id');
+  if (!id) return { error: 'User ID required' };
+
+  // Prevent deleting yourself
+  if (String(id) === String(currentUser.id)) {
+    return { error: 'You cannot delete your own account' };
+  }
+
+  // Prevent deleting the super admin
+  const { SUPER_ADMIN_EMAIL } = await import('@/lib/checkUser');
+  const userRes = await fetch(`${STRAPI_URL}/api/users/${id}`, {
+    headers: authHeaders(), cache: 'no-store',
+  });
+  if (userRes.ok) {
+    const userData = await userRes.json();
+    if (userData?.email === SUPER_ADMIN_EMAIL) {
+      return { error: 'Cannot delete the super admin' };
+    }
+  }
+
+  const res = await fetch(`${STRAPI_URL}/api/users/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  if (!res.ok) return { error: 'Failed to delete user' };
+
+  revalidatePath('/admin/users');
+  return { success: true };
+}
+
 // ── STATS ─────────────────────────────────────────────────────────────────────
 
 export async function adminGetStats() {
