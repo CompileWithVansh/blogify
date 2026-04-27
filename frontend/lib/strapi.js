@@ -6,27 +6,35 @@ const headers = {
   Authorization: `Bearer ${STRAPI_API_TOKEN}`,
 };
 
+function fetchWithTimeout(url, options = {}, ms = 5000) {
+  return fetch(url, { ...options, signal: AbortSignal.timeout(ms) });
+}
+
 // ── READ ──────────────────────────────────────────────────────────────────────
 
 export async function getPosts({ page = 1, pageSize = 9, category, search } = {}) {
   const params = new URLSearchParams({
     'pagination[page]': page,
     'pagination[pageSize]': pageSize,
-    'populate': '*',           // Strapi 5: use * not comma-separated
+    'populate': '*',
     'sort': 'createdAt:desc',
   });
   if (category && category !== 'all') params.append('filters[category][$eq]', category);
   if (search) params.append('filters[title][$containsi]', search);
 
-  const res = await fetch(`${STRAPI_URL}/api/posts?${params}`, {
-    headers,
-    cache: 'no-store',
-  });
-  if (!res.ok) {
-    console.error('getPosts error:', res.status, await res.text());
+  try {
+    const res = await fetchWithTimeout(`${STRAPI_URL}/api/posts?${params}`, {
+      headers,
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      console.error('getPosts error:', res.status, await res.text());
+      return { data: [], meta: { pagination: { page: 1, pageCount: 1, total: 0 } } };
+    }
+    return res.json();
+  } catch {
     return { data: [], meta: { pagination: { page: 1, pageCount: 1, total: 0 } } };
   }
-  return res.json();
 }
 
 export async function getPostBySlug(slug) {
@@ -34,13 +42,17 @@ export async function getPostBySlug(slug) {
     'filters[slug][$eq]': slug,
     'populate': '*',
   });
-  const res = await fetch(`${STRAPI_URL}/api/posts?${params}`, {
-    headers,
-    cache: 'no-store',
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.data?.[0] ?? null;
+  try {
+    const res = await fetchWithTimeout(`${STRAPI_URL}/api/posts?${params}`, {
+      headers,
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.data?.[0] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getFeaturedPosts() {
@@ -50,13 +62,18 @@ export async function getFeaturedPosts() {
     'pagination[pageSize]': '3',
     'sort': 'createdAt:desc',
   });
-  const res = await fetch(`${STRAPI_URL}/api/posts?${params}`, {
-    headers,
-    cache: 'no-store',
-  });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.data ?? [];
+  try {
+    const res = await fetchWithTimeout(`${STRAPI_URL}/api/posts?${params}`, {
+      headers,
+      cache: 'no-store',
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.data ?? [];
+  } catch {
+    return [];
+  }
+}
 }
 
 // ── CREATE ────────────────────────────────────────────────────────────────────
